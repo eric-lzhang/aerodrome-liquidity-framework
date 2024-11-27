@@ -59,3 +59,24 @@ class BlockchainConnector:
         except Exception as e:
             self.logger.error(f"Error fetching latest block number: {e}")
             return None
+
+    def validate_address(self, address):
+        """
+        Validates a Base address.
+
+        Args:
+            address (str): The Base address to validate.
+
+        Returns:
+            bool: True if the address is valid, False otherwise.
+        """
+        try:
+            is_valid = self.web3.is_address(address)
+            if is_valid:
+                self.logger.info(f"Valid Base address: {address}")
+            else:
+                self.logger.warning(f"Invalid Base address: {address}")
+            return is_valid
+        except Exception as e:
+            self.logger.error(f"Error validating address {address}: {e}")
+            return False

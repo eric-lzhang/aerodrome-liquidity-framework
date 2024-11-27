@@ -1,7 +1,12 @@
 from web3 import Web3
 from eth_account import Account
 import logging
-from config.config import INFURA_PROJECT_ID, PRIVATE_KEY
+from config.config import (
+    PROVIDER,
+    INFURA_PROJECT_ID,
+    PRIVATE_KEY,
+    ALCHEMY_PROJECT_ID
+)
 
 class BlockchainConnector:
     """
@@ -36,8 +41,17 @@ class BlockchainConnector:
             Web3: A Web3 instance connected to the Base network, or None if the connection fails.
         """
         try:
-            infura_url = f"https://base-mainnet.infura.io/v3/{INFURA_PROJECT_ID}"
-            web3 = Web3(Web3.HTTPProvider(infura_url))
+            # Select the provider URL
+            if PROVIDER == 'INFURA':
+                url = f"https://base-mainnet.infura.io/v3/{INFURA_PROJECT_ID}"
+                self.logger.info("Using Infura provider.")
+            elif PROVIDER == 'ALCHEMY':
+                url = f"https://base-mainnet.g.alchemy.com/v2/{ALCHEMY_PROJECT_ID}"
+                self.logger.info("Using Alchemy provider.")
+            else:
+                raise ValueError("Unsupported provider specified in .env.")
+
+            web3 = Web3(Web3.HTTPProvider(url))
 
             if web3.is_connected():
                 self.logger.info("Successfully connected to the Base blockchain.")

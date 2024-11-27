@@ -35,13 +35,16 @@ class BlockchainConnector:
     
     def connect_to_blockchain(self):
         """
-        Establishes a connection to the Base blockchain using Infura.
+        Establishes a connection to the Base blockchain using Infura or Alchemy.
 
         Returns:
-            Web3: A Web3 instance connected to the Base network, or None if the connection fails.
+            Web3: A Web3 instance connected to the Base network.
+
+        Raises:
+            RuntimeError: If the connection to the blockchain fails.
         """
         try:
-            # Select the provider URL
+            # Determine the provider URL
             if PROVIDER == 'INFURA':
                 url = f"https://base-mainnet.infura.io/v3/{INFURA_PROJECT_ID}"
                 self.logger.info("Using Infura provider.")
@@ -49,19 +52,20 @@ class BlockchainConnector:
                 url = f"https://base-mainnet.g.alchemy.com/v2/{ALCHEMY_PROJECT_ID}"
                 self.logger.info("Using Alchemy provider.")
             else:
-                raise ValueError("Unsupported provider specified in .env.")
+                self.logger.error(f"Unsupported provider '{PROVIDER}' specified in .env.")
+                raise ValueError(f"Unsupported provider '{PROVIDER}' specified in .env.")
 
+            # Attempt to connect to the blockchain
             web3 = Web3(Web3.HTTPProvider(url))
-
-            if web3.is_connected():
-                self.logger.info("Successfully connected to the Base blockchain.")
-                return web3
-            else:
+            if not web3.is_connected():
                 self.logger.error("Failed to connect to the Base blockchain.")
-                return None
+                raise RuntimeError("Failed to connect to the Base blockchain.")
+
+            self.logger.info("Successfully connected to the Base blockchain.")
+            return web3
         except Exception as e:
-            self.logger.error(f"An error occurred while connecting to the Base blockchain: {e}")
-            return None
+            self.logger.error(f"Error connecting to the blockchain: {e}")
+            raise
 
     def derive_public_address(self):
         """

@@ -1,32 +1,56 @@
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 import logging
 from utils.blockchain_connector import BlockchainConnector
 
+# Disable the logging for concise output
+logging.basicConfig(level=logging.CRITICAL)
 class TestBlockchainConnector(unittest.TestCase):
     @patch('utils.blockchain_connector.Web3')
-    def test_connect_to_blockchain_success(self, mock_web3):
-        # Mock the Web3 connection
-        mock_instance = mock_web3.return_value  # Mock the Web3 instance
+    def test_connect_to_blockchain_success_infura(self, mock_web3):
+        mock_instance = MagicMock()
         mock_instance.is_connected.return_value = True
+        mock_web3.return_value = mock_instance
 
-        # Initialize the BlockchainConnector
-        blockchain_connector = BlockchainConnector()
-        
-        # Assert the connection was successful
-        self.assertTrue(blockchain_connector.web3.is_connected())
-    
+        with patch('utils.blockchain_connector.PROVIDER', 'INFURA'):
+            connector = BlockchainConnector()
+            self.assertTrue(connector.web3.is_connected())
+
+    @patch('utils.blockchain_connector.Web3')
+    def test_connect_to_blockchain_success_alchemy(self, mock_web3):
+        mock_instance = MagicMock()
+        mock_instance.is_connected.return_value = True
+        mock_web3.return_value = mock_instance
+
+        with patch('utils.blockchain_connector.PROVIDER', 'ALCHEMY'):
+            connector = BlockchainConnector()
+            self.assertTrue(connector.web3.is_connected())
+
     @patch('utils.blockchain_connector.Web3')
     def test_connect_to_blockchain_failure(self, mock_web3):
-        # Mock the Web3 connection
-        mock_instance = mock_web3.return_value  # Mock the Web3 instance
+        mock_instance = MagicMock()
+        mock_instance.is_connected.return_value = False
+        mock_web3.return_value = mock_instance
+
+        with patch('utils.blockchain_connector.PROVIDER', 'INFURA'):
+            with self.assertRaises(RuntimeError):
+                BlockchainConnector()
+
+    @patch('utils.blockchain_connector.Web3')
+    def test_connect_to_blockchain_unsupported_provider(self, mock_web3):
+        with patch('utils.blockchain_connector.PROVIDER', 'UNSUPPORTED'):
+            with self.assertRaises(ValueError):
+                BlockchainConnector()
+
+    @patch('utils.blockchain_connector.Web3')
+    def test_connect_to_blockchain_connection_failure(self, mock_web3):
+        # Mock Web3 instance with is_connected returning False
+        mock_instance = mock_web3.return_value
         mock_instance.is_connected.return_value = False
 
-        # Initialize the BlockchainConnector
-        blockchain_connector = BlockchainConnector()
-        
-        # Assert that web3 is None when connection fails
-        self.assertIsNone(blockchain_connector.web3)
+        with patch('utils.blockchain_connector.PROVIDER', 'INFURA'):
+            with self.assertRaises(RuntimeError):
+                BlockchainConnector()
 
     @patch('utils.blockchain_connector.Web3')
     def test_get_balance_with_default_address(self, mock_web3):
@@ -82,7 +106,6 @@ class TestBlockchainConnector(unittest.TestCase):
         valid_address = "0x4200000000000000000000000000000000000006"
         self.assertTrue(blockchain_connector.validate_address(valid_address))
 
-
     @patch('utils.blockchain_connector.Web3')
     def test_validate_address_invalid(self, mock_web3):
         # Mock the is_address method to return False
@@ -112,7 +135,6 @@ class TestBlockchainConnector(unittest.TestCase):
 
         # Assert the balance is correct
         self.assertEqual(balance, 1.0)
-
 
     @patch('utils.blockchain_connector.Web3')
     def test_get_balance_invalid_address(self, mock_web3):

@@ -53,6 +53,25 @@ class TestBlockchainConnector(unittest.TestCase):
                 BlockchainConnector()
 
     @patch('utils.blockchain_connector.Web3')
+    def test_valid_private_key(self, mock_web3):
+        with patch('utils.blockchain_connector.PRIVATE_KEY', '0x4c0883a6a102937d6231461b5dbb6204fe512921708279d96ad9e3ef3dbae1fd'):
+            connector = BlockchainConnector()
+            self.assertIsNotNone(connector.public_address)
+            self.assertEqual(connector.private_key, '0x4c0883a6a102937d6231461b5dbb6204fe512921708279d96ad9e3ef3dbae1fd')
+
+    @patch('utils.blockchain_connector.Web3')
+    def test_invalid_private_key(self, mock_web3):
+        with patch('utils.blockchain_connector.PRIVATE_KEY', 'InvalidPrivateKey'):
+            with self.assertRaises(ValueError):
+                BlockchainConnector()
+
+    @patch('utils.blockchain_connector.Web3')
+    def test_missing_private_key(self, mock_web3):
+        with patch('utils.blockchain_connector.PRIVATE_KEY', None):
+            with self.assertRaises(ValueError):
+                BlockchainConnector()
+
+    @patch('utils.blockchain_connector.Web3')
     def test_get_balance_with_default_address(self, mock_web3):
         # Mock the Web3 instance
         mock_instance = mock_web3.return_value

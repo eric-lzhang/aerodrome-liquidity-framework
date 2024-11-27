@@ -30,7 +30,7 @@ class BlockchainConnector:
         self.logger = logging.getLogger(self.__class__.__name__)
         # self.logger.disabled = True # Disable it when necessary
         self.web3 = self.connect_to_blockchain()
-        self.private_key = PRIVATE_KEY
+        self.private_key = self.get_valid_private_key()
         self.public_address = self.derive_public_address()
     
     def connect_to_blockchain(self):
@@ -65,6 +65,27 @@ class BlockchainConnector:
             return web3
         except Exception as e:
             self.logger.error(f"Error connecting to the blockchain: {e}")
+            raise
+
+    def get_valid_private_key(self):
+        """
+        Retrieves and validates the private key.
+
+        Returns:
+            str: A valid private key.
+
+        Raises:
+            ValueError: If the private key is invalid or not set.
+        """
+        if not PRIVATE_KEY:
+            self.logger.error("Private key is not set.")
+            raise ValueError("Private key is required but not set.")
+
+        try:
+            Account.from_key(PRIVATE_KEY)
+            return PRIVATE_KEY
+        except ValueError as e:
+            self.logger.error(f"Invalid private key provided: {e}")
             raise
 
     def derive_public_address(self):

@@ -4,6 +4,9 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+# Private key for deriving the public address
+PRIVATE_KEY = os.getenv('PRIVATE_KEY')
+
 # Infura Project ID. Get this from https://www.infura.io/
 INFURA_PROJECT_ID = os.getenv('INFURA_PROJECT_ID')
 

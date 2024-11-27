@@ -12,11 +12,12 @@ def main():
 
     # Initialize Blockchain Connector
     blockchain_connector = BlockchainConnector()
-    latest_block = blockchain_connector.get_latest_block_number()
-    if latest_block is not None:
-        logger.info(f"Retrieved latest block: {latest_block}")
+    wallet_address = blockchain_connector.public_address
+    current_balance = blockchain_connector.get_balance()
+    if current_balance is not None:
+        logger.info(f"The ETH wallet balance for {wallet_address} is: {current_balance}")
     else:
-        logger.error("Failed to retrieve the latest block.")
+        logger.error(f"Failed to retrieve the wallet balance for {wallet_address}")
 
 if __name__ == "__main__":
     main()

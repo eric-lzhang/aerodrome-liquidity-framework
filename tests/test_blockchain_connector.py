@@ -29,6 +29,47 @@ class TestBlockchainConnector(unittest.TestCase):
         self.assertIsNone(blockchain_connector.web3)
 
     @patch('utils.blockchain_connector.Web3')
+    def test_get_balance_with_default_address(self, mock_web3):
+        # Mock the Web3 instance
+        mock_instance = mock_web3.return_value
+        mock_instance.eth.get_balance.return_value = 1000000000000000000  # 1 Ether in Wei
+        mock_instance.from_wei.return_value = 1.0
+
+        # Mock private key and derived public address
+        private_key = "0x4c0883a6a102937d6231461b5dbb6204fe512921708279d96ad9e3ef3dbae1fd"
+        derived_address = "0x90F8bf6A459f320ead074411a4B0e7943Ea8c9C1"
+
+        # Initialize BlockchainConnector with mocked private key
+        with patch('utils.blockchain_connector.PRIVATE_KEY', private_key):
+            blockchain_connector = BlockchainConnector()
+            blockchain_connector.public_address = derived_address  # Mock public address
+
+        # Call get_balance without specifying an address
+        balance = blockchain_connector.get_balance()
+
+        # Assert that the balance for the default address is fetched correctly
+        self.assertEqual(balance, 1.0)
+
+    @patch('utils.blockchain_connector.Web3')
+    def test_get_balance_with_custom_address(self, mock_web3):
+        # Mock the Web3 instance
+        mock_instance = mock_web3.return_value
+        mock_instance.eth.get_balance.return_value = 2000000000000000000  # 2 Ether in Wei
+        mock_instance.from_wei.return_value = 2.0
+
+        # Custom address to test
+        custom_address = "0x1234567890abcdef1234567890abcdef12345678"
+
+        # Initialize BlockchainConnector
+        blockchain_connector = BlockchainConnector()
+
+        # Call get_balance with a custom address
+        balance = blockchain_connector.get_balance(custom_address)
+
+        # Assert that the balance for the custom address is fetched correctly
+        self.assertEqual(balance, 2.0)
+
+    @patch('utils.blockchain_connector.Web3')
     def test_validate_address_valid(self, mock_web3):
         # Mock the is_address method to return True
         mock_instance = mock_web3.return_value

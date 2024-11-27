@@ -1,6 +1,7 @@
 from web3 import Web3
+from eth_account import Account
 import logging
-from config.config import INFURA_PROJECT_ID
+from config.config import INFURA_PROJECT_ID, PRIVATE_KEY
 
 class BlockchainConnector:
     """
@@ -24,6 +25,8 @@ class BlockchainConnector:
         self.logger = logging.getLogger(self.__class__.__name__)
         # self.logger.disabled = True # Disable it when necessary
         self.web3 = self.connect_to_blockchain()
+        self.private_key = PRIVATE_KEY
+        self.public_address = self.derive_public_address()
     
     def connect_to_blockchain(self):
         """
@@ -44,6 +47,26 @@ class BlockchainConnector:
                 return None
         except Exception as e:
             self.logger.error(f"An error occurred while connecting to the Base blockchain: {e}")
+            return None
+
+    def derive_public_address(self):
+        """
+        Derives the public address from the private key.
+
+        Returns:
+            str: The derived public address, or None if the private key is not set or an error occurs.
+        """
+        try:
+            if not self.private_key:
+                self.logger.error("Private key is not set.")
+                return None
+
+            account = Account.from_key(self.private_key)
+            public_address = account.address
+            self.logger.info(f"Derived public address: {public_address}")
+            return public_address
+        except Exception as e:
+            self.logger.error(f"Error deriving public address: {e}")
             return None
 
     def get_latest_block_number(self):
@@ -82,7 +105,7 @@ class BlockchainConnector:
             self.logger.error(f"Error validating address {address}: {e}")
             return False
 
-    def get_balance(self, address):
+    def get_balance(self, address=None):
         """
         Retrieves the balance of the specified Base address.
 
@@ -93,6 +116,10 @@ class BlockchainConnector:
             float: The balance in Ether, or None if an error occurs.
         """
         try:
+            # Use the instance's public address if no address is provided
+            if address is None:
+                address = self.public_address
+
             if not self.validate_address(address):
                 self.logger.error(f"Invalid Base address: {address}")
                 return None

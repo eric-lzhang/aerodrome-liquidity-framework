@@ -4,7 +4,7 @@ from config.config import INFURA_PROJECT_ID
 
 class BlockchainConnector:
     """
-    A class to manage the connection to the Ethereum blockchain.
+    A class to manage the connection to the Base blockchain.
 
     This class handles:
     - Establishing a Web3 connection using the Infura API.
@@ -26,32 +26,35 @@ class BlockchainConnector:
     
     def connect_to_blockchain(self):
         """
-        Establishes a connection to the Ethereum blockchain using Infura.
+        Establishes a connection to the Base blockchain using Infura.
 
         Returns:
-            Web3: A Web3 instance connected to the Ethereum network, or None if the connection fails.
+            Web3: A Web3 instance connected to the Base network, or None if the connection fails.
         """
         try:
             infura_url = f"https://base-mainnet.infura.io/v3/{INFURA_PROJECT_ID}"
             web3 = Web3(Web3.HTTPProvider(infura_url))
 
             if web3.is_connected():
-                self.logger.info("Successfully connected to the Ethereum blockchain.")
+                self.logger.info("Successfully connected to the Base blockchain.")
                 return web3
             else:
-                self.logger.error("Failed to connect to the Ethereum blockchain.")
+                self.logger.error("Failed to connect to the Base blockchain.")
                 return None
         except Exception as e:
-            self.logger.error(f"An error occurred while connecting to the Ethereum blockchain: {e}")
+            self.logger.error(f"An error occurred while connecting to the Base blockchain: {e}")
             return None
 
     def get_latest_block_number(self):
         """
-        Retrieves the latest block number from the Ethereum blockchain.
+        Retrieves the latest block number from the Base blockchain.
+
+        Returns:
+            Int: The latest Base block number.
         """
         try:
             latest_block = self.web3.eth.block_number
-            self.logger.info(f"Latest Ethereum block number: {latest_block}")
+            self.logger.info(f"Latest Base block number: {latest_block}")
             return latest_block
         except Exception as e:
             self.logger.error(f"Error fetching latest block number: {e}")

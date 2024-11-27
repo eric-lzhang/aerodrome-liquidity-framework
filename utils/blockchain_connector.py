@@ -22,6 +22,7 @@ class BlockchainConnector:
         Initialize the BlockchainConnector by setting up Web3.
         """
         self.logger = logging.getLogger(self.__class__.__name__)
+        # self.logger.disabled = True # Disable it when necessary
         self.web3 = self.connect_to_blockchain()
     
     def connect_to_blockchain(self):
@@ -80,3 +81,27 @@ class BlockchainConnector:
         except Exception as e:
             self.logger.error(f"Error validating address {address}: {e}")
             return False
+
+    def get_balance(self, address):
+        """
+        Retrieves the balance of the specified Base address.
+
+        Args:
+            address (str): The Base address to check the balance for.
+
+        Returns:
+            float: The balance in Ether, or None if an error occurs.
+        """
+        try:
+            if not self.validate_address(address):
+                self.logger.error(f"Invalid Base address: {address}")
+                return None
+
+            # Retrieve the balance in Wei and convert to Ether
+            balance_wei = self.web3.eth.get_balance(address)
+            balance_ether = self.web3.from_wei(balance_wei, 'ether')
+            self.logger.info(f"Balance for address {address}: {balance_ether} Ether")
+            return balance_ether
+        except Exception as e:
+            self.logger.error(f"Error retrieving balance for address {address}: {e}")
+            return None

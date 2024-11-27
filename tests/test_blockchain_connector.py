@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import patch
+import logging
 from utils.blockchain_connector import BlockchainConnector
 
 class TestBlockchainConnector(unittest.TestCase):
@@ -54,5 +55,40 @@ class TestBlockchainConnector(unittest.TestCase):
         invalid_address = "0xInvalidAddress123"
         self.assertFalse(blockchain_connector.validate_address(invalid_address))
 
+    @patch('utils.blockchain_connector.Web3')
+    def test_get_balance_valid_address(self, mock_web3):
+        # Mock the Web3 instance
+        mock_instance = mock_web3.return_value
+        mock_instance.eth.get_balance.return_value = 1000000000000000000  # 1 Ether in Wei
+        mock_instance.from_wei.return_value = 1.0
+
+        # Initialize the BlockchainConnector
+        blockchain_connector = BlockchainConnector()
+
+        # Test with a valid Base address
+        valid_address = "0x4200000000000000000000000000000000000006"
+        balance = blockchain_connector.get_balance(valid_address)
+
+        # Assert the balance is correct
+        self.assertEqual(balance, 1.0)
+
+
+    @patch('utils.blockchain_connector.Web3')
+    def test_get_balance_invalid_address(self, mock_web3):
+        # Mock the Web3 instance
+        mock_instance = mock_web3.return_value
+        mock_instance.is_address.return_value = False  # Address validation will fail
+
+        # Initialize the BlockchainConnector
+        blockchain_connector = BlockchainConnector()
+
+        # Test with an invalid Base address
+        invalid_address = "0xInvalidAddress123"
+        balance = blockchain_connector.get_balance(invalid_address)
+
+        # Assert the balance is None for invalid address
+        self.assertIsNone(balance)
+
 if __name__ == '__main__':
+    # Run the test suite
     unittest.main()

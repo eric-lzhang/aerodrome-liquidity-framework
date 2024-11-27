@@ -23,20 +23,27 @@ class BlockchainConnector:
         """
         self.logger = logging.getLogger(self.__class__.__name__)
         self.web3 = self.connect_to_blockchain()
-
+    
     def connect_to_blockchain(self):
         """
         Establishes a connection to the Ethereum blockchain using Infura.
+
+        Returns:
+            Web3: A Web3 instance connected to the Ethereum network, or None if the connection fails.
         """
-        infura_url = f"https://mainnet.infura.io/v3/{INFURA_PROJECT_ID}"
-        web3 = Web3(Web3.HTTPProvider(infura_url))
-        
-        if web3.is_connected():
-            self.logger.info("Successfully connected to the Ethereum blockchain.")
-        else:
-            self.logger.error("Failed to connect to the Ethereum blockchain.")
-        
-        return web3
+        try:
+            infura_url = f"https://base-mainnet.infura.io/v3/{INFURA_PROJECT_ID}"
+            web3 = Web3(Web3.HTTPProvider(infura_url))
+
+            if web3.is_connected():
+                self.logger.info("Successfully connected to the Ethereum blockchain.")
+                return web3
+            else:
+                self.logger.error("Failed to connect to the Ethereum blockchain.")
+                return None
+        except Exception as e:
+            self.logger.error(f"An error occurred while connecting to the Ethereum blockchain: {e}")
+            return None
 
     def get_latest_block_number(self):
         """

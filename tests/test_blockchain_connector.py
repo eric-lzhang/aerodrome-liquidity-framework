@@ -15,7 +15,7 @@ class TestBlockchainConnector(unittest.TestCase):
     - Derive public address tests
     - Address validation tests
     - Balance retrieval tests
-    - Retrive the latest block number
+    - Retrieve the latest block number
     """
 
     """

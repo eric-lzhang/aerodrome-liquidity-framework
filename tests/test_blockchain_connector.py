@@ -12,6 +12,7 @@ class TestBlockchainConnector(unittest.TestCase):
     Grouped into:
     - Connection tests
     - Private key tests
+    - Derive public addrss tests
     - Address validation tests
     - Balance retrieval tests
     """
@@ -82,6 +83,32 @@ class TestBlockchainConnector(unittest.TestCase):
     @patch('utils.blockchain_connector.Web3')
     def test_get_valid_private_key_missing_private_key(self, mock_web3):
         with patch('utils.blockchain_connector.PRIVATE_KEY', None):
+            with self.assertRaises(ValueError):
+                BlockchainConnector()
+
+
+    """
+    Tests for the `derive_public_address` method.
+    Scenarios include:
+    - Deriving a valid public address from a valid private key
+    - Handling an invalid private key
+    """
+    @patch('utils.blockchain_connector.Web3')
+    def test_derive_public_address_success(self, mock_web3):
+        # Mock private key and expected public address
+        valid_private_key = "0x4c0883a6a102937d6231461b5dbb6204fe512921708279d96ad9e3ef3dbae1fd"
+        expected_public_address = "0x0dCbccB685DaD21066Da979e8C32053E7e8F9E9A"
+
+        with patch('utils.blockchain_connector.PRIVATE_KEY', valid_private_key):
+            blockchain_connector = BlockchainConnector()
+            self.assertEqual(blockchain_connector.public_address, expected_public_address)
+
+    @patch('utils.blockchain_connector.Web3')
+    def test_derive_public_address_invalid_key(self, mock_web3):
+        # Mock invalid private key
+        invalid_private_key = "InvalidPrivateKey"
+
+        with patch('utils.blockchain_connector.PRIVATE_KEY', invalid_private_key):
             with self.assertRaises(ValueError):
                 BlockchainConnector()
 

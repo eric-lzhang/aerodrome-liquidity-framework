@@ -108,21 +108,6 @@ class BlockchainConnector:
             self.logger.error(f"Error deriving public address: {e}")
             return None
 
-    def get_latest_block_number(self):
-        """
-        Retrieves the latest block number from the Base blockchain.
-
-        Returns:
-            Int: The latest Base block number.
-        """
-        try:
-            latest_block = self.web3.eth.block_number
-            self.logger.info(f"Latest Base block number: {latest_block}")
-            return latest_block
-        except Exception as e:
-            self.logger.error(f"Error fetching latest block number: {e}")
-            return None
-
     def validate_address(self, address):
         """
         Validates a Base address.
@@ -170,4 +155,19 @@ class BlockchainConnector:
             return balance_ether
         except Exception as e:
             self.logger.error(f"Error retrieving balance for address {address}: {e}")
+            return None
+        
+    def get_latest_block_number(self):
+        """
+        Retrieves the latest block number from the Base blockchain.
+
+        Returns:
+            Int: The latest Base block number.
+        """
+        try:
+            latest_block = self.web3.eth.block_number
+            self.logger.info(f"Latest Base block number: {latest_block}")
+            return latest_block
+        except Exception as e:
+            self.logger.error(f"Error fetching latest block number: {e}")
             return None

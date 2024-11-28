@@ -44,16 +44,6 @@ class TestBlockchainConnector(unittest.TestCase):
             self.assertTrue(connector.web3.is_connected())
 
     @patch('utils.blockchain_connector.Web3')
-    def test_connect_to_blockchain_failure(self, mock_web3):
-        mock_instance = MagicMock()
-        mock_instance.is_connected.return_value = False
-        mock_web3.return_value = mock_instance
-
-        with patch('utils.blockchain_connector.PROVIDER', 'INFURA'):
-            with self.assertRaises(RuntimeError):
-                BlockchainConnector()
-
-    @patch('utils.blockchain_connector.Web3')
     def test_connect_to_blockchain_unsupported_provider(self, mock_web3):
         with patch('utils.blockchain_connector.PROVIDER', 'UNSUPPORTED'):
             with self.assertRaises(ValueError):

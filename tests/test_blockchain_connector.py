@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, PropertyMock
 import logging
 from utils.blockchain_connector import BlockchainConnector
 
@@ -12,9 +12,10 @@ class TestBlockchainConnector(unittest.TestCase):
     Grouped into:
     - Connection tests
     - Private key tests
-    - Derive public addrss tests
+    - Derive public address tests
     - Address validation tests
     - Balance retrieval tests
+    - Retrive the latest block number
     """
 
     """
@@ -226,6 +227,43 @@ class TestBlockchainConnector(unittest.TestCase):
 
         # Assert the balance is None for invalid address
         self.assertIsNone(balance)
+
+
+    """
+    Tests for the `get_latest_block_number` method.
+    Scenarios include:
+    - Successfully retrieving the latest block number
+    - Handling errors during retrieval
+    """
+    @patch('utils.blockchain_connector.Web3')
+    def test_get_latest_block_number_success(self, mock_web3):
+        # Mock the Web3 instance to return a specific block number
+        mock_instance = mock_web3.return_value
+        mock_instance.eth.block_number = 12345678
+
+        # Initialize BlockchainConnector
+        blockchain_connector = BlockchainConnector()
+
+        # Call get_latest_block_number
+        block_number = blockchain_connector.get_latest_block_number()
+
+        # Assert the block number is correct
+        self.assertEqual(block_number, 12345678)
+
+    @patch('utils.blockchain_connector.Web3')
+    def test_get_latest_block_number_error(self, mock_web3):
+        # Mock the Web3 instance
+        mock_instance = mock_web3.return_value
+        
+        # Mock the 'eth' attribute's 'block_number' to raise an exception
+        type(mock_instance.eth).block_number = PropertyMock(side_effect=Exception("Error fetching block number"))
+
+        # Initialize BlockchainConnector
+        blockchain_connector = BlockchainConnector()
+
+        # Call get_latest_block_number and expect None due to error
+        block_number = blockchain_connector.get_latest_block_number()
+        self.assertIsNone(block_number)
 
 if __name__ == '__main__':
     # Run the test suite

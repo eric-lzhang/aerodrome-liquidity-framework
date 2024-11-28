@@ -71,7 +71,15 @@ INFURA_PROJECT_ID=a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
 ALCHEMY_PROJECT_ID=sQlw3r8hJbPclaDBH4eabydo5pf-YJAl
 PRIVATE_KEY=afdfd9c3dc095ef696594f6cedcae52e72dcd697e2a952115781444224f89
 ```
-### 5. Make A Demo Run
+
+### 5. Run the Test
+
+Run the tests to esure the methods works.
+```bash
+python -m unittest discover tests
+```
+
+### 6. Make A Demo Run
 
 Run main.py to get your wallet balance:
 

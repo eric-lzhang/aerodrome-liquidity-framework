@@ -93,12 +93,15 @@ class BlockchainConnector:
         Derives the public address from the private key.
 
         Returns:
-            str: The derived public address, or None if the private key is not set or an error occurs.
+            str: The derived public address.
+
+        Raises:
+            ValueError: If the private key is not set or an error occurs during derivation.
         """
         try:
             if not self.private_key:
                 self.logger.error("Private key is not set.")
-                return None
+                raise ValueError("Private key is required but not set.")
 
             account = Account.from_key(self.private_key)
             public_address = account.address
@@ -106,7 +109,7 @@ class BlockchainConnector:
             return public_address
         except Exception as e:
             self.logger.error(f"Error deriving public address: {e}")
-            return None
+            raise
 
     def validate_address(self, address):
         """

@@ -277,6 +277,55 @@ class BlockchainConnector:
             return None
 
     # Transaction-Related Functions
+    def approve_token(self, token_address, spender_address, amount=None):
+        """
+        Approves a spender to spend a specific amount of tokens on behalf of the user.
+
+        Args:
+            token_address (str): The contract address of the token.
+            spender_address (str): The address of the spender.
+            amount (int, optional): The amount of tokens to approve (in the smallest unit). Defaults to the maximum uint256 value.
+
+        Returns:
+            str: A message indicating whether approval was granted or not, or the transaction hash if approval was required.
+
+        Raises:
+            ValueError: If the token address or spender address is invalid.
+            RuntimeError: If the approval transaction fails.
+        """
+        try:
+            # Default to the maximum allowance if no amount is provided
+            if amount is None:
+                amount = 2**256 - 1  # Maximum value for uint256
+
+            # Validate token and spender addresses
+            if not self.validate_address(token_address):
+                raise ValueError(f"Invalid token address: {token_address}")
+            if not self.validate_address(spender_address):
+                raise ValueError(f"Invalid spender address: {spender_address}")
+
+            # Load the token contract
+            token_contract = self.load_contract(token_address, "erc20_abi.json")
+
+            # Check if the current allowance is already enough
+            current_allowance = token_contract.functions.allowance(self.public_address, spender_address).call()
+            if current_allowance >= amount:
+                self.logger.info(f"{token_address} already approved. Current allowance: {current_allowance}")
+                return f"Allowance is sufficient. Current allowance: {current_allowance}"
+
+            # Prepare the approval function
+            approve_function = token_contract.functions.approve(spender_address, amount)
+            
+            # Use build_and_send_transaction to handle the transaction
+            tx_hash = self.build_and_send_transaction(approve_function)
+            
+            self.logger.info(f"Approval successful. Transaction hash: {tx_hash}")
+            return f"Approval successful. Transaction hash: {tx_hash}"
+
+        except Exception as e:
+            self.logger.error(f"Error during token approval: {e}")
+            raise RuntimeError("Token approval transaction failed.") from e
+
     def build_and_send_transaction(self, transaction_function):
         """
         Builds, signs, and sends a transaction.

@@ -7,3 +7,6 @@ __pycache__/
 
 # Log files
 app.log
+
+# Local files
+local_demo.py

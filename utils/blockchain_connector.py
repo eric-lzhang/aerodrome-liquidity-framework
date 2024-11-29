@@ -292,6 +292,46 @@ class BlockchainConnector:
             self.logger.error(f"Error fetching token balance for {wallet_address}: {e}")
             return None
 
+    def transfer_token(self, token_address, recipient_address, amount):
+        """
+        Transfers an ERC-20 token from the wallet to a recipient address.
+
+        Args:
+            token_address (str): The blockchain address of the token contract.
+            recipient_address (str): The blockchain address of the recipient.
+            amount (float): The amount of tokens to transfer.
+
+        Returns:
+            str: Transaction hash if the transfer is successful.
+
+        Raises:
+            ValueError: If any of the addresses or amount is invalid.
+        """
+        try:
+            # Validate addresses
+            if not self.validate_address(token_address):
+                raise ValueError(f"Invalid token address: {token_address}")
+            if not self.validate_address(recipient_address):
+                raise ValueError(f"Invalid recipient address: {recipient_address}")
+
+            # Load the ERC-20 contract
+            erc20_contract = self.load_contract(token_address, "erc20_abi.json")
+
+            # Convert the amount to Wei (based on token decimals)
+            decimals = erc20_contract.functions.decimals().call()
+            amount = int(amount * (10 ** decimals))
+
+            # Set the transaction function
+            transaction_function=erc20_contract.functions.transfer(recipient_address, amount)
+
+            # Use the reusable function to build and send the transaction
+            tx_hash = self.build_and_send_transaction(transaction_function)
+            return tx_hash
+        except Exception as e:
+            self.logger.error(f"Error transferring tokens: {e}")
+            raise RuntimeError("Transaction failed") from e
+
+
     def get_latest_block_number(self):
         """
         Retrieves the latest block number from the Base blockchain.

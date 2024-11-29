@@ -1,5 +1,6 @@
 import unittest
-from unittest.mock import patch, MagicMock, PropertyMock
+from unittest.mock import patch, MagicMock, PropertyMock, mock_open
+import json
 import logging
 from utils.blockchain_connector import BlockchainConnector
 
@@ -112,6 +113,43 @@ class TestBlockchainConnector(unittest.TestCase):
         with patch('utils.blockchain_connector.PRIVATE_KEY', invalid_private_key):
             with self.assertRaises(ValueError):
                 BlockchainConnector()
+
+
+    """
+    Tests for the `load_token_addresses` method.
+    Scenarios include:
+    - Successfully loading token addresses from a valid JSON file.
+    - Handling invalid JSON format.
+    - Handling missing or inaccessible files.
+    """
+    @patch("builtins.open", new_callable=mock_open, read_data='{"USDC": "0x1234", "DAI": "0x5678"}')
+    @patch("os.path.join", return_value="config/token_addresses.json")
+    def test_load_token_addresses_success(self, mock_path_join, mock_open_file):
+        # Initialize BlockchainConnector
+        connector = BlockchainConnector()
+
+        # Call the method and assert the result
+        result = connector.load_token_addresses()
+        expected = {"USDC": "0x1234", "DAI": "0x5678"}
+        self.assertEqual(result, expected)
+        self.assertTrue(mock_open_file.called)
+
+    @patch("builtins.open", new_callable=mock_open, read_data='Invalid JSON')
+    @patch("os.path.join", return_value="config/token_addresses.json")
+    def test_load_token_addresses_invalid_json(self, mock_path_join, mock_open_file):
+        with self.assertRaises(json.decoder.JSONDecodeError):
+            # Initialize BlockchainConnector
+            # Method called in init and assert it raises a RuntimeError
+            connector = BlockchainConnector()
+            
+
+    @patch("os.path.join", return_value="config/token_addresses.json")
+    def test_load_token_addresses_file_not_found(self, mock_path_join):
+        with patch("builtins.open", side_effect=FileNotFoundError):
+            with self.assertRaises(FileNotFoundError):
+                # Initialize BlockchainConnector
+                # Mock open in init to raise a FileNotFoundError
+                connector = BlockchainConnector()
 
 
     """

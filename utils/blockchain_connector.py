@@ -2,6 +2,7 @@ import os
 import json
 from web3 import Web3
 from eth_account import Account
+from decimal import Decimal
 import logging
 from config.config import (
     PROVIDER,
@@ -202,6 +203,32 @@ class BlockchainConnector:
             self.logger.error(f"Unexpected error loading contract: {e}")
             raise
 
+    def to_human_readable(self, amount, decimals):
+        """
+        Converts a blockchain-compatible amount to a human-readable format.
+
+        Args:
+            amount (int): The amount in the smallest unit (e.g., Wei or token smallest unit).
+            decimals (int): The number of decimals the token uses (default is 18 for most tokens).
+
+        Returns:
+            float: The human-readable amount.
+        """
+        return float(Decimal(amount) / Decimal(10 ** decimals))
+
+    def to_blockchain_unit(self, amount, decimals):
+        """
+        Converts a human-readable amount to a blockchain-compatible format.
+
+        Args:
+            amount (float): The human-readable amount.
+            decimals (int): The number of decimals the token uses (default is 18 for most tokens).
+
+        Returns:
+            int: The amount in the smallest unit.
+        """
+        return int(Decimal(amount) * Decimal(10 ** decimals))
+
 
     # Blockchain State Queries
     def get_balance(self, address=None):
@@ -260,7 +287,7 @@ class BlockchainConnector:
             decimals = token_contract.functions.decimals().call()
 
             # Convert balance to human-readable format
-            readable_balance = balance / (10 ** decimals)
+            readable_balance = self.to_human_readable(balance, decimals)
             self.logger.info(f"{token_name} balance for {wallet_address}: {readable_balance}")
             return readable_balance
 
@@ -282,6 +309,7 @@ class BlockchainConnector:
         except Exception as e:
             self.logger.error(f"Error fetching latest block number: {e}")
             return None
+
 
     # Transaction-Related Functions
     def approve_token(self, token_address, spender_address, amount=None):
@@ -401,16 +429,15 @@ class BlockchainConnector:
 
             # Convert the amount to Wei (based on token decimals)
             decimals = erc20_contract.functions.decimals().call()
-            raw_amount = amount
-            amount = int(amount * (10 ** decimals))
+            amount_in_units = self.to_blockchain_unit(amount, decimals)
 
             # Set the transaction function
-            transaction_function=erc20_contract.functions.transfer(recipient_address, amount)
+            transaction_function=erc20_contract.functions.transfer(recipient_address, amount_in_units)
 
             # Use the reusable function to build and send the transaction
             tx_hash = self.build_and_send_transaction(transaction_function)
 
-            self.logger.info(f"Transfer successful for {raw_amount} {token_name} to {recipient_address}. Transaction hash: {tx_hash}")
+            self.logger.info(f"Transfer successful for {amount} {token_name} to {recipient_address}. Transaction hash: {tx_hash}")
             return tx_hash
         except Exception as e:
             self.logger.error(f"Error transferring tokens: {e}")

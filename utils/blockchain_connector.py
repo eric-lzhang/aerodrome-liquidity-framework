@@ -155,6 +155,45 @@ class BlockchainConnector:
             self.logger.error(f"Error validating address {address}: {e}")
             return False
 
+    def load_contract(self, contract_address, abi_filename):
+        """
+        Loads a smart contract instance given its address and ABI file.
+
+        Args:
+            contract_address (str): The blockchain address of the contract.
+            abi_filename (str): The name of the ABI JSON file (without the path).
+
+        Returns:
+            web3.eth.Contract: The loaded contract instance.
+
+        Raises:
+            ValueError: If the contract address is invalid or the ABI file cannot be loaded.
+        """
+        try:
+            # Validate the contract address
+            if not self.validate_address(contract_address):
+                raise ValueError(f"Invalid contract address: {contract_address}")
+
+            # Construct the path to the ABI file
+            abi_path = os.path.join("config", "abi", abi_filename)
+            with open(abi_path, "r") as abi_file:
+                contract_abi = json.load(abi_file)
+
+            # Return the contract instance
+            contract = self.web3.eth.contract(address=contract_address, abi=contract_abi)
+            self.logger.info(f"Loaded contract at address: {contract_address}")
+            return contract
+
+        except FileNotFoundError:
+            self.logger.error(f"ABI file not found: {abi_filename}")
+            raise ValueError("ABI file not found.")
+        except ValueError as ve:
+            self.logger.error(f"ValueError: {ve}")
+            raise
+        except Exception as e:
+            self.logger.error(f"Unexpected error loading contract: {e}")
+            raise
+
     def get_balance(self, address=None):
         """
         Retrieves the balance of the specified Base address.

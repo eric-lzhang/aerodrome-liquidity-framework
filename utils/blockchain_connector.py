@@ -26,6 +26,7 @@ class BlockchainConnector:
         web3 (Web3): Instance of the Web3 connection.
     """
 
+    # Core Blockchain Operations
     def __init__(self):
         """
         Initialize the BlockchainConnector by setting up Web3.
@@ -115,26 +116,8 @@ class BlockchainConnector:
             self.logger.error(f"Error deriving public address: {e}")
             raise
 
-    def load_token_addresses(self):
-        """
-        Loads token addresses from a JSON file.
 
-        Returns:
-            dict: A dictionary mapping token names to addresses.
-
-        Raises:
-            RuntimeError: If the JSON file cannot be loaded.
-        """
-        try:
-            tokens_path = os.path.join("config", "token_addresses.json")
-            with open(tokens_path, 'r') as tokens_file:
-                token_addresses = json.load(tokens_file)
-            self.logger.info("Token addresses loaded successfully.")
-            return token_addresses
-        except Exception as e:
-            self.logger.error(f"Error loading token addresses: {e}")
-            raise
-
+    # Utility Functions
     def validate_address(self, address):
         """
         Validates a Base address.
@@ -155,6 +138,26 @@ class BlockchainConnector:
         except Exception as e:
             self.logger.error(f"Error validating address {address}: {e}")
             return False
+
+    def load_token_addresses(self):
+        """
+        Loads token addresses from a JSON file.
+
+        Returns:
+            dict: A dictionary mapping token names to addresses.
+
+        Raises:
+            RuntimeError: If the JSON file cannot be loaded.
+        """
+        try:
+            tokens_path = os.path.join("config", "token_addresses.json")
+            with open(tokens_path, 'r') as tokens_file:
+                token_addresses = json.load(tokens_file)
+            self.logger.info("Token addresses loaded successfully.")
+            return token_addresses
+        except Exception as e:
+            self.logger.error(f"Error loading token addresses: {e}")
+            raise
 
     def load_contract(self, contract_address, abi_filename):
         """
@@ -195,42 +198,8 @@ class BlockchainConnector:
             self.logger.error(f"Unexpected error loading contract: {e}")
             raise
 
-    def build_and_send_transaction(self, transaction_function):
-        """
-        Builds, signs, and sends a transaction.
 
-        Args:
-            transaction_function (function): A callable function from the contract to execute the transaction.
-            gas (int): Gas limit for the transaction. Defaults to 200000.
-            gas_price_gwei (int): Gas price in Gwei. Defaults to 10.
-
-        Returns:
-            str: Transaction hash if the transaction is successful.
-
-        Raises:
-            RuntimeError: If an error occurs during transaction building, signing, or sending.
-        """
-        try:
-            # Build the transaction
-            transaction = transaction_function.build_transaction({
-                'from': self.public_address,
-                'gas': GAS_AMOUNT,
-                'gasPrice': int(self.web3.eth.gas_price * 1.5),
-                'nonce': self.web3.eth.get_transaction_count(self.public_address),
-            })
-
-            # Sign the transaction
-            signed_tx = self.web3.eth.account.sign_transaction(transaction, private_key=self.private_key)
-
-            # Send the transaction
-            tx_hash = self.web3.eth.send_raw_transaction(signed_tx.raw_transaction)
-            self.logger.info(f"Transaction successful. Hash: {tx_hash.hex()}")
-            return tx_hash.hex()
-        except Exception as e:
-            self.logger.error(f"Error during transaction execution: {e}")
-            raise RuntimeError("Transaction failed") from e
-
-
+    # Blockchain State Queries
     def get_balance(self, address=None):
         """
         Retrieves the balance of the specified Base address.
@@ -292,6 +261,57 @@ class BlockchainConnector:
             self.logger.error(f"Error fetching token balance for {wallet_address}: {e}")
             return None
 
+    def get_latest_block_number(self):
+        """
+        Retrieves the latest block number from the Base blockchain.
+
+        Returns:
+            Int: The latest Base block number.
+        """
+        try:
+            latest_block = self.web3.eth.block_number
+            self.logger.info(f"Latest Base block number: {latest_block}")
+            return latest_block
+        except Exception as e:
+            self.logger.error(f"Error fetching latest block number: {e}")
+            return None
+
+    # Transaction-Related Functions
+    def build_and_send_transaction(self, transaction_function):
+        """
+        Builds, signs, and sends a transaction.
+
+        Args:
+            transaction_function (function): A callable function from the contract to execute the transaction.
+            gas (int): Gas limit for the transaction. Defaults to 200000.
+            gas_price_gwei (int): Gas price in Gwei. Defaults to 10.
+
+        Returns:
+            str: Transaction hash if the transaction is successful.
+
+        Raises:
+            RuntimeError: If an error occurs during transaction building, signing, or sending.
+        """
+        try:
+            # Build the transaction
+            transaction = transaction_function.build_transaction({
+                'from': self.public_address,
+                'gas': GAS_AMOUNT,
+                'gasPrice': int(self.web3.eth.gas_price * 1.5),
+                'nonce': self.web3.eth.get_transaction_count(self.public_address),
+            })
+
+            # Sign the transaction
+            signed_tx = self.web3.eth.account.sign_transaction(transaction, private_key=self.private_key)
+
+            # Send the transaction
+            tx_hash = self.web3.eth.send_raw_transaction(signed_tx.raw_transaction)
+            self.logger.info(f"Transaction successful. Hash: {tx_hash.hex()}")
+            return tx_hash.hex()
+        except Exception as e:
+            self.logger.error(f"Error during transaction execution: {e}")
+            raise RuntimeError("Transaction failed") from e
+
     def transfer_token(self, token_address, recipient_address, amount):
         """
         Transfers an ERC-20 token from the wallet to a recipient address.
@@ -330,19 +350,3 @@ class BlockchainConnector:
         except Exception as e:
             self.logger.error(f"Error transferring tokens: {e}")
             raise RuntimeError("Transaction failed") from e
-
-
-    def get_latest_block_number(self):
-        """
-        Retrieves the latest block number from the Base blockchain.
-
-        Returns:
-            Int: The latest Base block number.
-        """
-        try:
-            latest_block = self.web3.eth.block_number
-            self.logger.info(f"Latest Base block number: {latest_block}")
-            return latest_block
-        except Exception as e:
-            self.logger.error(f"Error fetching latest block number: {e}")
-            return None

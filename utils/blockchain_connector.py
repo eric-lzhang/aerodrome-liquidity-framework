@@ -1,3 +1,5 @@
+import os
+import json
 from web3 import Web3
 from eth_account import Account
 import logging
@@ -32,6 +34,7 @@ class BlockchainConnector:
         self.web3 = self.connect_to_blockchain()
         self.private_key = self.get_valid_private_key()
         self.public_address = self.derive_public_address()
+        self.token_addresses = self.load_token_addresses()
     
     def connect_to_blockchain(self):
         """
@@ -109,6 +112,26 @@ class BlockchainConnector:
             return public_address
         except Exception as e:
             self.logger.error(f"Error deriving public address: {e}")
+            raise
+
+    def load_token_addresses(self):
+        """
+        Loads token addresses from a JSON file.
+
+        Returns:
+            dict: A dictionary mapping token names to addresses.
+
+        Raises:
+            RuntimeError: If the JSON file cannot be loaded.
+        """
+        try:
+            tokens_path = os.path.join("config", "token_addresses.json")
+            with open(tokens_path, 'r') as tokens_file:
+                token_addresses = json.load(tokens_file)
+            self.logger.info("Token addresses loaded successfully.")
+            return token_addresses
+        except Exception as e:
+            self.logger.error(f"Error loading token addresses: {e}")
             raise
 
     def validate_address(self, address):

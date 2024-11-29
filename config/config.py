@@ -15,3 +15,6 @@ INFURA_PROJECT_ID = os.getenv('INFURA_PROJECT_ID')
 
 # Alchemy Project ID. Get this from https://www.alchemy.com/
 ALCHEMY_PROJECT_ID = os.getenv('ALCHEMY_PROJECT_ID')
+
+# Maximum Gas Allowed
+GAS_AMOUNT = 1000000

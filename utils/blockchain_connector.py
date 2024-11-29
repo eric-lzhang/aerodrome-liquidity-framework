@@ -7,7 +7,8 @@ from config.config import (
     PROVIDER,
     INFURA_PROJECT_ID,
     PRIVATE_KEY,
-    ALCHEMY_PROJECT_ID
+    ALCHEMY_PROJECT_ID,
+    GAS_AMOUNT
 )
 
 class BlockchainConnector:
@@ -193,6 +194,42 @@ class BlockchainConnector:
         except Exception as e:
             self.logger.error(f"Unexpected error loading contract: {e}")
             raise
+
+    def build_and_send_transaction(self, transaction_function):
+        """
+        Builds, signs, and sends a transaction.
+
+        Args:
+            transaction_function (function): A callable function from the contract to execute the transaction.
+            gas (int): Gas limit for the transaction. Defaults to 200000.
+            gas_price_gwei (int): Gas price in Gwei. Defaults to 10.
+
+        Returns:
+            str: Transaction hash if the transaction is successful.
+
+        Raises:
+            RuntimeError: If an error occurs during transaction building, signing, or sending.
+        """
+        try:
+            # Build the transaction
+            transaction = transaction_function.build_transaction({
+                'from': self.public_address,
+                'gas': GAS_AMOUNT,
+                'gasPrice': int(self.web3.eth.gas_price * 1.5),
+                'nonce': self.web3.eth.get_transaction_count(self.public_address),
+            })
+
+            # Sign the transaction
+            signed_tx = self.web3.eth.account.sign_transaction(transaction, private_key=self.private_key)
+
+            # Send the transaction
+            tx_hash = self.web3.eth.send_raw_transaction(signed_tx.raw_transaction)
+            self.logger.info(f"Transaction successful. Hash: {tx_hash.hex()}")
+            return tx_hash.hex()
+        except Exception as e:
+            self.logger.error(f"Error during transaction execution: {e}")
+            raise RuntimeError("Transaction failed") from e
+
 
     def get_balance(self, address=None):
         """

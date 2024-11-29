@@ -222,6 +222,39 @@ class BlockchainConnector:
             self.logger.error(f"Error retrieving balance for address {address}: {e}")
             return None
         
+    def get_token_balance(self, token_address, wallet_address=None):
+        """
+        Retrieves the balance of a specified token for a given wallet address.
+
+        Args:
+            token_address (str): The contract address of the token.
+            wallet_address (str, optional): The wallet address to fetch the balance for.
+                                            Defaults to the instance's public address.
+
+        Returns:
+            float: The balance of the token in human-readable format, or None if an error occurs.
+        """
+        try:
+            # Default to the instance's public address if no wallet address is provided
+            if wallet_address is None:
+                wallet_address = self.public_address
+
+            # Load the contract
+            token_contract = self.load_contract(token_address, "erc20_abi.json")
+
+            # Fetch the balance and decimals
+            balance = token_contract.functions.balanceOf(wallet_address).call()
+            decimals = token_contract.functions.decimals().call()
+
+            # Convert balance to human-readable format
+            readable_balance = balance / (10 ** decimals)
+            self.logger.info(f"Token balance for {wallet_address}: {readable_balance}")
+            return readable_balance
+
+        except Exception as e:
+            self.logger.error(f"Error fetching token balance for {wallet_address}: {e}")
+            return None
+
     def get_latest_block_number(self):
         """
         Retrieves the latest block number from the Base blockchain.

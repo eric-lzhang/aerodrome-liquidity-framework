@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
-load_dotenv()
+load_dotenv(override=True)
 
 # Private key for deriving the public address
 PRIVATE_KEY = os.getenv('PRIVATE_KEY')

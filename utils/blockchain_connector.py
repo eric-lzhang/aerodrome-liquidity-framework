@@ -153,6 +153,10 @@ class BlockchainConnector:
             tokens_path = os.path.join("config", "token_addresses.json")
             with open(tokens_path, 'r') as tokens_file:
                 token_addresses = json.load(tokens_file)
+
+            # Create a reverse mapping for address-to-name lookup
+            self.token_name_mapping = {v: k for k, v in token_addresses.items()}
+
             self.logger.info("Token addresses loaded successfully.")
             return token_addresses
         except Exception as e:
@@ -248,17 +252,20 @@ class BlockchainConnector:
             # Load the contract
             token_contract = self.load_contract(token_address, "erc20_abi.json")
 
+            # Get token name for logging
+            token_name = self.token_name_mapping.get(token_address, "Unknown Token")
+
             # Fetch the balance and decimals
             balance = token_contract.functions.balanceOf(wallet_address).call()
             decimals = token_contract.functions.decimals().call()
 
             # Convert balance to human-readable format
             readable_balance = balance / (10 ** decimals)
-            self.logger.info(f"Token balance for {wallet_address}: {readable_balance}")
+            self.logger.info(f"{token_name} balance for {wallet_address}: {readable_balance}")
             return readable_balance
 
         except Exception as e:
-            self.logger.error(f"Error fetching token balance for {wallet_address}: {e}")
+            self.logger.error(f"Error fetching {token_name} balance for {wallet_address}: {e}")
             return None
 
     def get_latest_block_number(self):
@@ -307,10 +314,13 @@ class BlockchainConnector:
             # Load the token contract
             token_contract = self.load_contract(token_address, "erc20_abi.json")
 
+            # Get token name for logging
+            token_name = self.token_name_mapping.get(token_address, "Unknown Token")
+
             # Check if the current allowance is already enough
             current_allowance = token_contract.functions.allowance(self.public_address, spender_address).call()
             if current_allowance >= amount:
-                self.logger.info(f"{token_address} already approved. Current allowance: {current_allowance}")
+                self.logger.info(f"{token_name} already approved. Current allowance: {current_allowance}")
                 return f"Allowance is sufficient. Current allowance: {current_allowance}"
 
             # Prepare the approval function
@@ -319,8 +329,8 @@ class BlockchainConnector:
             # Use build_and_send_transaction to handle the transaction
             tx_hash = self.build_and_send_transaction(approve_function)
             
-            self.logger.info(f"Approval successful. Transaction hash: {tx_hash}")
-            return f"Approval successful. Transaction hash: {tx_hash}"
+            self.logger.info(f"Approval successful for {token_name}. Transaction hash: {tx_hash}")
+            return f"Approval successful for {token_name}. Transaction hash: {tx_hash}"
 
         except Exception as e:
             self.logger.error(f"Error during token approval: {e}")
@@ -386,8 +396,12 @@ class BlockchainConnector:
             # Load the ERC-20 contract
             erc20_contract = self.load_contract(token_address, "erc20_abi.json")
 
+            # Get token name for logging
+            token_name = self.token_name_mapping.get(token_address, "Unknown Token")
+
             # Convert the amount to Wei (based on token decimals)
             decimals = erc20_contract.functions.decimals().call()
+            raw_amount = amount
             amount = int(amount * (10 ** decimals))
 
             # Set the transaction function
@@ -395,6 +409,8 @@ class BlockchainConnector:
 
             # Use the reusable function to build and send the transaction
             tx_hash = self.build_and_send_transaction(transaction_function)
+
+            self.logger.info(f"Transfer successful for {raw_amount} {token_name} to {recipient_address}. Transaction hash: {tx_hash}")
             return tx_hash
         except Exception as e:
             self.logger.error(f"Error transferring tokens: {e}")

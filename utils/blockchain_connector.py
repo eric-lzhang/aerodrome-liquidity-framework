@@ -151,7 +151,7 @@ class BlockchainConnector:
             RuntimeError: If the JSON file cannot be loaded.
         """
         try:
-            tokens_path = os.path.join("config", "token_addresses.json")
+            tokens_path = os.path.join("config", "address", "token_addresses.json")
             with open(tokens_path, 'r') as tokens_file:
                 token_addresses = json.load(tokens_file)
 

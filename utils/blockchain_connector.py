@@ -38,6 +38,7 @@ class BlockchainConnector:
         self.private_key = self.get_valid_private_key()
         self.public_address = self.derive_public_address()
         self.token_addresses = self.load_token_addresses()
+        self.pools_information = self.load_pools_information() 
     
     def connect_to_blockchain(self):
         """
@@ -163,6 +164,27 @@ class BlockchainConnector:
         except Exception as e:
             self.logger.error(f"Error loading token addresses: {e}")
             raise
+
+    def load_pools_information(self):
+        """
+        Loads pool information from a JSON file.
+
+        Returns:
+            dict: A dictionary containing information for all pools.
+
+        Raises:
+            RuntimeError: If the JSON file cannot be loaded.
+        """
+        try:
+            pools_path = os.path.join("config", "pools_information.json")
+            with open(pools_path, 'r') as pools_file:
+                pools_information = json.load(pools_file)
+
+            self.logger.info("Pools information loaded successfully.")
+            return pools_information
+        except Exception as e:
+            self.logger.error(f"Error loading pools information: {e}")
+            raise RuntimeError("Failed to load pools information.") from e
 
     def load_contract(self, contract_address, abi_filename):
         """

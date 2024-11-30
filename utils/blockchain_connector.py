@@ -38,6 +38,7 @@ class BlockchainConnector:
         self.private_key = self.get_valid_private_key()
         self.public_address = self.derive_public_address()
         self.token_addresses = self.load_token_addresses()
+        self.contract_addresses = self.load_contract_addresses()
     
     def connect_to_blockchain(self):
         """
@@ -163,6 +164,30 @@ class BlockchainConnector:
         except Exception as e:
             self.logger.error(f"Error loading token addresses: {e}")
             raise
+
+    def load_contract_addresses(self):
+        """
+        Loads contract addresses from a JSON file.
+
+        Returns:
+            dict: A dictionary mapping contract names to addresses.
+
+        Raises:
+            RuntimeError: If the JSON file cannot be loaded.
+        """
+        try:
+            contracts_path = os.path.join("config", "address", "contract_addresses.json")
+            with open(contracts_path, 'r') as contracts_file:
+                contract_addresses = json.load(contracts_file)
+
+            # Create a reverse mapping for address-to-name lookup
+            self.contract_name_mapping = {v: k for k, v in contract_addresses.items()}
+
+            self.logger.info("Contract addresses loaded successfully.")
+            return contract_addresses
+        except Exception as e:
+            self.logger.error(f"Error loading contract addresses: {e}")
+            raise RuntimeError("Failed to load contract addresses.") from e
 
     def load_contract(self, contract_address, abi_filename):
         """

@@ -344,3 +344,31 @@ class LiquidityManager:
         except Exception as e:
             self.logger.error(f"Failed to collect fees: {e}")
             raise RuntimeError("Failed to collect fees.") from e
+
+    def burn_nft(self):
+        """
+        Burns the NFT associated with the liquidity position.
+
+        This function:
+        - Sends a transaction to burn the NFT.
+        - Waits for the transaction to be confirmed.
+        - Logs the successful burning of the NFT.
+
+        Returns:
+            str: Transaction hash of the burn operation.
+
+        Raises:
+            RuntimeError: If burning the NFT fails.
+        """
+        try:
+            # Build and send the transaction to burn the NFT
+            self.logger.info(f"Burning NFT for Token ID: {self.nft_token_id}...")
+            burn_function = self.nft_contract.functions.burn(self.nft_token_id)
+            tx_hash, receipt = self.blockchain_connector.build_and_send_transaction(burn_function)
+
+            self.logger.info(f"NFT burned successfully. Transaction hash: {tx_hash}")
+            return tx_hash
+
+        except Exception as e:
+            self.logger.error(f"Failed to burn NFT: {e}")
+            raise RuntimeError("Failed to burn NFT.") from e

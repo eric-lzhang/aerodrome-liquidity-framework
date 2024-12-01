@@ -18,8 +18,10 @@ class LiquidityManager:
             pool_name (str): Name of the liquidity pool (e.g., "CL100_WETH_USDC").
             token0_max (float): Maximum amount of token0 (e.g., WETH) to deposit.
             token1_max (float): Maximum amount of token1 (e.g., USDC) to deposit.
-            lower_range_percentage (int): Lower range percentage adjustment from the current price.
-            upper_range_percentage (int): Upper range percentage adjustment from the current price.
+            lower_range_percentage (int): Percentage adjustment below the current tick for the lower range. 
+                                        A positive value (e.g., 1 for 1%) expands the range downward.
+            upper_range_percentage (int): Percentage adjustment above the current tick for the upper range. 
+                                        A positive value (e.g., 1 for 1%) expands the range upward.
         """
         self.logger = logging.getLogger(self.__class__.__name__)
         self.blockchain_connector = BlockchainConnector()
@@ -34,6 +36,16 @@ class LiquidityManager:
         self.token1_name = pool_info["token1"]
         self.pool_contract = self.blockchain_connector.load_contract(pool_info["pool_address"], pool_info["pool_abi"])
         
+        # Load token contracts to fetch decimals
+        token0_address = self.blockchain_connector.token_addresses[self.token0_name]
+        token1_address = self.blockchain_connector.token_addresses[self.token1_name]
+        token0_contract = self.blockchain_connector.load_contract(token0_address, "erc20_abi.json")
+        token1_contract = self.blockchain_connector.load_contract(token1_address, "erc20_abi.json")
+        
+        # Store decimals
+        self.token0_decimals = token0_contract.functions.decimals().call()
+        self.token1_decimals = token1_contract.functions.decimals().call()
+
         # Parameters for liquidity position
         self.token0_max = token0_max
         self.token1_max = token1_max
@@ -41,3 +53,102 @@ class LiquidityManager:
         self.upper_range_percentage = upper_range_percentage
 
         self.logger.info(f"Initialized LiquidityManager for pool: {pool_name}")
+
+    def tick_to_price(self, tick):
+        """
+        Converts a tick value to the corresponding price.
+
+        Args:
+            tick (int): The tick value to convert.
+
+        Returns:
+            float: The price corresponding to the tick.
+        """
+        try:
+            base = 1.0001
+            adjusted_decimal = 10 ** (self.token0_decimals - self.token1_decimals)
+            price = (base ** tick) * adjusted_decimal
+            return price
+        except Exception as e:
+            self.logger.error(f"Error converting tick to price: {e}")
+            raise RuntimeError("Failed to convert tick to price.") from e
+
+    def get_current_price(self):
+        """
+        Retrieves the current price of token0 in terms of token1.
+
+        Returns:
+            float: The current price of token0 in terms of token1.
+
+        Raises:
+            RuntimeError: If fetching the current price fails.
+        """
+        try:
+            # Fetch the current sqrt price from the pool
+            slot0 = self.pool_contract.functions.slot0().call()
+            sqrt_price_x96 = slot0[0]
+            ratio = (sqrt_price_x96 / (1 << 96)) ** 2
+            adjusted_decimal = 10 ** (self.token0_decimals - self.token1_decimals)
+            current_price = ratio * adjusted_decimal
+            self.logger.info(f"Current price: {current_price}")
+            return current_price
+        except Exception as e:
+            self.logger.error(f"Failed to get current price: {e}")
+            raise RuntimeError("Failed to fetch current price.") from e
+
+    def get_pool_status(self):
+        """
+        Retrieve the current status of the liquidity pool.
+
+        This includes:
+        - Current tick
+        - Adjusted lower and upper ticks based on specified percentage ranges
+        - Current price, lower price, and upper price in the pool
+
+        Returns:
+            dict: A dictionary with the following keys:
+                - current_tick: The current tick of the pool.
+                - lower_tick: The adjusted lower tick.
+                - upper_tick: The adjusted upper tick.
+                - current_price: The current price of token0 in terms of token1.
+                - lower_price: The price corresponding to the lower tick.
+                - upper_price: The price corresponding to the upper tick.
+
+        Raises:
+            RuntimeError: If fetching the pool status fails.
+        """
+        try:
+            slot0 = self.pool_contract.functions.slot0().call()
+
+            # Calculate the lower and upper ticks with adjustments
+            current_tick = int(slot0[1])
+            tick_spacing = self.pool_contract.functions.tickSpacing().call()
+
+            # The raw tick represent the narrowest tick range that contains the current tick
+            raw_lower_tick = current_tick - (current_tick % tick_spacing)
+            raw_upper_tick = raw_lower_tick + tick_spacing
+            
+            # Adjust the raw ticks based on the specified range percentages
+            lower_tick = raw_lower_tick - self.lower_range_percentage * tick_spacing
+            upper_tick = raw_upper_tick + self.upper_range_percentage * tick_spacing
+
+            
+            # Calculate prices
+            current_price = self.get_current_price()
+            lower_price = self.tick_to_price(lower_tick)
+            upper_price = self.tick_to_price(upper_tick)
+
+            status = {
+                "current_price": current_price,
+                "lower_price": lower_price,
+                "upper_price": upper_price,
+                "current_tick": current_tick,
+                "lower_tick": lower_tick,
+                "upper_tick": upper_tick,
+            }
+
+            return status
+
+        except Exception as e:
+            self.logger.error(f"Failed to get pool status: {e}")
+            raise RuntimeError("Failed to fetch pool status.") from e

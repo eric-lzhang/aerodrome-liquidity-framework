@@ -259,6 +259,57 @@ class LiquidityManager:
         except Exception as e:
             raise RuntimeError(f"Error parsing mint receipt: {e}")
 
+    def close_liquidity_position(self, amount0Min=0, amount1Min=0, amount0Max=2**128 - 1, amount1Max=2**128 - 1):
+        """
+        Closes the liquidity position by:
+        - Decreasing liquidity to release tokens.
+        - Collecting accrued fees.
+        - Burning the NFT associated with the liquidity position.
+
+        Args:
+            amount0Min (int, optional): Minimum amount of token0 to receive when decreasing liquidity. Defaults to 0.
+            amount1Min (int, optional): Minimum amount of token1 to receive when decreasing liquidity. Defaults to 0.
+            amount0Max (int, optional): Maximum amount of token0 to collect as fees. Defaults to 2**128 - 1.
+            amount1Max (int, optional): Maximum amount of token1 to collect as fees. Defaults to 2**128 - 1.
+            deadline (int, optional): Unix timestamp after which the transactions will revert. Defaults to 5 minutes from the current block time.
+
+        Returns:
+            dict: A summary of the operations performed with transaction hashes for:
+                - "decrease_liquidity_tx": Transaction hash for decreasing liquidity.
+                - "collect_fees_tx": Transaction hash for collecting fees.
+                - "burn_nft_tx": Transaction hash for burning the NFT.
+
+        Raises:
+            RuntimeError: If any of the operations fail.
+        """
+        try:
+            self.logger.info(f"Closing liquidity position for Token ID: {self.nft_token_id}...")
+
+            # Step 1: Decrease liquidity
+            self.logger.info("Step 1: Decreasing liquidity...")
+            decrease_tx_hash = self.decrease_liquidity(amount0Min, amount1Min)
+
+            # Step 2: Collect fees
+            self.logger.info("Step 2: Collecting fees...")
+            collect_tx_hash = self.collect_fees(amount0Max, amount1Max)
+
+            # Step 3: Burn the NFT
+            self.logger.info("Step 3: Burning the NFT...")
+            burn_tx_hash = self.burn_nft()
+
+            # Return a summary of the transactions
+            result = {
+                "decrease_liquidity_tx": decrease_tx_hash,
+                "collect_fees_tx": collect_tx_hash,
+                "burn_nft_tx": burn_tx_hash,
+            }
+            self.logger.info(f"Liquidity position closed successfully")
+            return result
+
+        except Exception as e:
+            self.logger.error(f"Failed to close liquidity position: {e}")
+            raise RuntimeError("Failed to close liquidity position.") from e
+
     def decrease_liquidity(self, amount0Min=0, amount1Min=0):
         """
         Decreases liquidity for the position with the specified parameters.

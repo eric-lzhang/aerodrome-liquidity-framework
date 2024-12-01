@@ -7,7 +7,7 @@ A robust open-source framework for automating liquidity pool position management
 - Python 3.9.7 or higher installed.
 - An Infura API key (for connecting to the Base network). You can get it for free from [Infura](https://www.infura.io/).
 - Alternatively, you can get an Alchemy API key from [Alchemy](https://www.alchemy.com/).
-- A valid Ethereum (Base) private key.
+- A valid Ethereum (Base) private key. You can get this by creating a wallet in [Metamask](https://chromewebstore.google.com/detail/metamask/nkbihfbeogaeaoehlefnkodbefgpgknn?hl=en)
 - To run the demo of opening and closing a liquidity position, add 0.001 ETH, 0.001 WETH, and 3 USDC in your wallet.
 
 ### 1. Clone the Repository

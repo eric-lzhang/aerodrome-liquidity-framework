@@ -1,8 +1,10 @@
 {
     "CL100_WETH_USDC": {
-        "pool_address": "0xb2cc224c1c9feE385f8ad6a55b4d94E92359DC59",
-        "pool_abi": "cl100_weth_usdc_abi.json",
         "token0": "WETH",
-        "token1": "USDC"
+        "token1": "USDC",
+        "pool_address": "0xb2cc224c1c9feE385f8ad6a55b4d94E92359DC59",
+        "pool_abi": "cl100_weth_usdc_pool_abi.json",
+        "nft_address": "0x827922686190790b37229fd06084350E74485b72",
+        "nft_abi": "cl100_weth_usdc_nft_abi.json"
     }
 }

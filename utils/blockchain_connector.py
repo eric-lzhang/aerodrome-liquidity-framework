@@ -378,7 +378,7 @@ class BlockchainConnector:
             approve_function = token_contract.functions.approve(spender_address, amount)
             
             # Use build_and_send_transaction to handle the transaction
-            tx_hash = self.build_and_send_transaction(approve_function)
+            tx_hash, receipt = self.build_and_send_transaction(approve_function)
             
             self.logger.info(f"Approval successful for {token_name}. Transaction hash: {tx_hash}")
             return f"Approval successful for {token_name}. Transaction hash: {tx_hash}"

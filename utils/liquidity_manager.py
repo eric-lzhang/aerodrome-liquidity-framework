@@ -25,6 +25,8 @@ class LiquidityManager:
                                         A positive value (e.g., 1 for 1%) expands the range upward.
         """
         self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.disabled = True # Disable it when necessary
+
         self.blockchain_connector = BlockchainConnector()
         
         # Load pool-specific information

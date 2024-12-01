@@ -34,7 +34,7 @@ class BlockchainConnector:
         Initialize the BlockchainConnector by setting up Web3.
         """
         self.logger = logging.getLogger(self.__class__.__name__)
-        # self.logger.disabled = True # Disable it when necessary
+        self.logger.disabled = True # Disable it when necessary
         self.web3 = self.connect_to_blockchain()
         self.private_key = self.get_valid_private_key()
         self.public_address = self.derive_public_address()

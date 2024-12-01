@@ -126,15 +126,15 @@ class LiquidityManager:
 
             # Calculate the lower and upper ticks with adjustments
             current_tick = int(slot0[1])
-            tick_spacing = self.pool_contract.functions.tickSpacing().call()
+            self.tick_spacing = self.pool_contract.functions.tickSpacing().call()
 
             # The raw tick represent the narrowest tick range that contains the current tick
-            raw_lower_tick = current_tick - (current_tick % tick_spacing)
-            raw_upper_tick = raw_lower_tick + tick_spacing
+            raw_lower_tick = current_tick - (current_tick % self.tick_spacing)
+            raw_upper_tick = raw_lower_tick + self.tick_spacing
             
             # Adjust the raw ticks based on the specified range percentages
-            lower_tick = raw_lower_tick - self.lower_range_percentage * tick_spacing
-            upper_tick = raw_upper_tick + self.upper_range_percentage * tick_spacing
+            lower_tick = raw_lower_tick - self.lower_range_percentage * self.tick_spacing
+            upper_tick = raw_upper_tick + self.upper_range_percentage * self.tick_spacing
 
             
             # Calculate prices
@@ -190,7 +190,7 @@ class LiquidityManager:
             mint_parameters = {
                 "token0": self.token0_address,
                 "token1": self.token1_address,
-                'tickSpacing': 100,
+                'tickSpacing': self.tick_spacing,
                 "tickLower": lower_tick,
                 "tickUpper": upper_tick,
                 "amount0Desired": token0_amount,

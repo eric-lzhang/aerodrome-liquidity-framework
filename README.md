@@ -8,7 +8,6 @@ A robust open-source framework for automating liquidity pool position management
 - An Infura API key (for connecting to the Base network). You can get it for free from [Infura](https://www.infura.io/).
 - Alternatively, you can get an Alchemy API key from [Alchemy](https://www.alchemy.com/).
 - A valid Ethereum (Base) private key.
-- To run the demo of opening and closing a liquidity position, add 0.001 ETH, 0.001 WETH, and 3 USDC in your wallet.
 
 ### 1. Clone the Repository
 
@@ -69,6 +68,7 @@ Example `.env`:
 ```env
 PROVIDER=INFURA
 INFURA_PROJECT_ID=a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
+ALCHEMY_PROJECT_ID=sQlw3r8hJbPclaDBH4eabydo5pf-YJAl
 PRIVATE_KEY=afdfd9c3dc095ef696594f6cedcae52e72dcd697e2a952115781444224f89
 ```
 
@@ -79,27 +79,10 @@ Run the tests to esure the methods works.
 python -m unittest discover tests
 ```
 
-### 6. Make A Demo Run - Get Wallet Balance
+### 6. Make A Demo Run
 
 Run main.py to get your wallet balance:
 
-```bash
-python main.py
-```
-
-### 7. Add Crypto to Your Wallet
-
-Add 0.001 ETH, 0.001 WETH, and 3 USDC in your wallet correspond to your private key.
-
-### 8. Make A Demo Run - Open and Close a Liquidity Positinon
-
-Comment out the following line in main.py:
-
-```python
-demo_liquidity_manager()
-```
-
-Then, run main.py again to see the life cycle of a liquidity position.
 ```bash
 python main.py
 ```

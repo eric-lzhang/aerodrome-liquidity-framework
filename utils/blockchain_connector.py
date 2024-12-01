@@ -422,6 +422,10 @@ class BlockchainConnector:
             # Pause to make sure the transaction went through
             time.sleep(1)
 
+            # Check if the transaction is successful
+            if receipt.status != 1:
+                raise Exception("Minting liquidity failed.")
+
             return tx_hash.hex(), receipt
         except Exception as e:
             self.logger.error(f"Error during transaction execution: {e}")

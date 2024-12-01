@@ -208,9 +208,53 @@ class LiquidityManager:
             # Build and send the transaction
             self.opening_tx_hash, self.opening_receipt = self.blockchain_connector.build_and_send_transaction(mint_function)
             
+            # Parse the opening receipt to store the liquidity position data
+            self.parse_opening_receipt()
+
             self.logger.info(f"Liquidity position opened successfully. Transaction hash: {self.opening_tx_hash}")
             return self.opening_tx_hash
 
         except Exception as e:
             self.logger.error(f"Failed to open liquidity position: {e}")
             raise RuntimeError("Failed to open liquidity position.") from e
+
+    def parse_opening_receipt(self):
+        """
+        Parses a opening receipt to extract amount0, amount1, and nft token id.
+
+        Args:
+            receipt (dict): The transaction receipt obtained from the blockchain.
+
+        Returns:
+            dict: A dictionary containing amount0, amount1, and nft token id.
+        """
+        try:
+            # Iterate through the logs to find the relevant data
+            for log in self.opening_receipt["logs"]:
+                # Get the amount0
+                if log.address == self.token0_address:
+                    raw_amount0_hex = log.data.hex()
+                    raw_amount0 = int(raw_amount0_hex, 16)
+                    self.amount0 = self.blockchain_connector.to_human_readable(raw_amount0, self.token0_decimals)
+                
+                # Get the amount1
+                if log.address == self.token1_address:
+                    raw_amount1_hex = log.data.hex()
+                    raw_amount1 = int(raw_amount1_hex, 16)
+                    self.amount1 = self.blockchain_connector.to_human_readable(raw_amount1, self.token1_decimals)
+
+                # Get the nft token id
+                # There are two log addresses equal to the nft address, we use this to find the one we need
+                if log.address == self.nft_address and len(log.topics) == 2: # There are two log addresses equal to the nft address, we use this to find the one we need
+                    token_id_hex = log.topics[1].hex()
+                    self.nft_token_id = int(token_id_hex, 16)
+
+            # Return the parsed results in a dictionary
+            return {
+                "amount0": self.amount0,
+                "amount1": self.amount1,
+                "tokenId": self.nft_token_id,
+            }
+
+        except Exception as e:
+            raise RuntimeError(f"Error parsing mint receipt: {e}")

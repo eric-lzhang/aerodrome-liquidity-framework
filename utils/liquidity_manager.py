@@ -304,3 +304,43 @@ class LiquidityManager:
         except Exception as e:
             self.logger.error(f"Failed to decrease liquidity: {e}")
             raise RuntimeError("Failed to decrease liquidity.") from e
+
+    def collect_fees(self, amount0Max=2**128 - 1, amount1Max=2**128 - 1):
+        """
+        Collects trading fees accrued by the liquidity position.
+
+        This function:
+        - Prepares and sends a transaction to collect fees.
+        - Waits for the transaction to be confirmed.
+        - Logs the collected fee amounts.
+
+        Args:
+            amount0Max (int, optional): Maximum amount of token0 to collect. Defaults to 2**128 - 1.
+            amount1Max (int, optional): Maximum amount of token1 to collect. Defaults to 2**128 - 1.
+
+        Returns:
+            str: Transaction hash of the collect fees operation.
+
+        Raises:
+            RuntimeError: If collecting fees fails.
+        """
+        try:
+            # Prepare fee collection parameters
+            collect_params = {
+                "tokenId": self.nft_token_id,
+                "recipient": self.blockchain_connector.public_address,
+                "amount0Max": amount0Max,
+                "amount1Max": amount1Max,
+            }
+
+            # Build and send the transaction
+            self.logger.info(f"Collecting fees for Token ID: {self.nft_token_id}...")
+            collect_function = self.nft_contract.functions.collect(collect_params)
+            tx_hash, receipt = self.blockchain_connector.build_and_send_transaction(collect_function)
+
+            self.logger.info(f"Fees collected successfully. Transaction hash: {tx_hash}")
+            return tx_hash
+
+        except Exception as e:
+            self.logger.error(f"Failed to collect fees: {e}")
+            raise RuntimeError("Failed to collect fees.") from e

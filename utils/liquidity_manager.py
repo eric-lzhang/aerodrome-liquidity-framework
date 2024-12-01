@@ -1,4 +1,5 @@
 import logging
+import time
 from utils.blockchain_connector import BlockchainConnector
 
 class LiquidityManager:
@@ -31,20 +32,23 @@ class LiquidityManager:
         if pool_name not in pools_information:
             raise ValueError(f"Invalid pool name: {pool_name}")
 
-        pool_info = pools_information[pool_name]
-        self.token0_name = pool_info["token0"]
-        self.token1_name = pool_info["token1"]
-        self.pool_contract = self.blockchain_connector.load_contract(pool_info["pool_address"], pool_info["pool_abi"])
+        self.pool_info = pools_information[pool_name]
+        self.token0_name = self.pool_info["token0"]
+        self.token1_name = self.pool_info["token1"]
+        self.pool_address = self.pool_info["pool_address"]
+        self.pool_contract = self.blockchain_connector.load_contract(self.pool_address, self.pool_info["pool_abi"])
+        self.nft_address = self.pool_info["nft_address"]
+        self.nft_contract = self.blockchain_connector.load_contract(self.nft_address, self.pool_info["nft_abi"])
         
         # Load token contracts to fetch decimals
-        token0_address = self.blockchain_connector.token_addresses[self.token0_name]
-        token1_address = self.blockchain_connector.token_addresses[self.token1_name]
-        token0_contract = self.blockchain_connector.load_contract(token0_address, "erc20_abi.json")
-        token1_contract = self.blockchain_connector.load_contract(token1_address, "erc20_abi.json")
+        self.token0_address = self.blockchain_connector.token_addresses[self.token0_name]
+        self.token1_address = self.blockchain_connector.token_addresses[self.token1_name]
+        self.token0_contract = self.blockchain_connector.load_contract(self.token0_address, "erc20_abi.json")
+        self.token1_contract = self.blockchain_connector.load_contract(self.token1_address, "erc20_abi.json")
         
         # Store decimals
-        self.token0_decimals = token0_contract.functions.decimals().call()
-        self.token1_decimals = token1_contract.functions.decimals().call()
+        self.token0_decimals = self.token0_contract.functions.decimals().call()
+        self.token1_decimals = self.token1_contract.functions.decimals().call()
 
         # Parameters for liquidity position
         self.token0_max = token0_max
@@ -152,3 +156,61 @@ class LiquidityManager:
         except Exception as e:
             self.logger.error(f"Failed to get pool status: {e}")
             raise RuntimeError("Failed to fetch pool status.") from e
+
+    def open_liquidity_position(self):
+        """
+        Opens a liquidity position in the pool with the specified parameters.
+
+        This function:
+        - Approves token0 and token1 spending.
+        - Calculates the tick range and amounts for the liquidity position.
+        - Mints a liquidity position in the pool.
+
+        Returns:
+            str: Transaction hash of the mint operation.
+
+        Raises:
+            RuntimeError: If opening the liquidity position fails.
+        """
+        try:
+            # Get pool status to determine ticks and price range
+            self.start_pool_status = self.get_pool_status()
+            lower_tick = self.start_pool_status["lower_tick"]
+            upper_tick = self.start_pool_status["upper_tick"]
+            
+            # Convert human-readable token amounts to blockchain units
+            token0_amount = self.blockchain_connector.to_blockchain_unit(self.token0_max, self.token0_decimals)
+            token1_amount = self.blockchain_connector.to_blockchain_unit(self.token1_max, self.token1_decimals)
+
+            # Approve token spending for the pool contract
+            self.blockchain_connector.approve_token(self.token0_address, self.nft_address, token0_amount)
+            self.blockchain_connector.approve_token(self.token1_address, self.nft_address, token1_amount)
+
+            # Prepare mint parameters
+            mint_parameters = {
+                "token0": self.token0_address,
+                "token1": self.token1_address,
+                'tickSpacing': 100,
+                "tickLower": lower_tick,
+                "tickUpper": upper_tick,
+                "amount0Desired": token0_amount,
+                "amount1Desired": token1_amount,
+                "amount0Min": 0,  # Set minimums to zero for simplicity
+                "amount1Min": 0,
+                "recipient": self.blockchain_connector.public_address,
+                "deadline": self.blockchain_connector.web3.eth.get_block("latest")["timestamp"] + 3 * 60,  # Deadline 3 minute from now
+                'sqrtPriceX96': 0
+            }
+
+            # Call the pool contract to mint liquidity position
+            mint_function = self.nft_contract.functions.mint(mint_parameters)
+
+            # Build and send the transaction
+            tx_hash = self.blockchain_connector.build_and_send_transaction(mint_function)
+            
+            self.logger.info(f"Liquidity position opened successfully. Transaction hash: {tx_hash}")
+            return tx_hash
+
+        except Exception as e:
+            self.logger.error(f"Failed to open liquidity position: {e}")
+            raise RuntimeError("Failed to open liquidity position.") from e

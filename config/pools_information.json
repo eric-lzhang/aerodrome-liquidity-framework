@@ -1,6 +1,6 @@
 {
     "CL100_WETH_USDC": {
-        "pool_address": "0xB2Cc224c1C9FeE385f8Ad6a55B4D94e92359DC59",
+        "pool_address": "0xb2cc224c1c9feE385f8ad6a55b4d94E92359DC59",
         "pool_abi": "cl100_weth_usdc_abi.json",
         "token0": "WETH",
         "token1": "USDC"

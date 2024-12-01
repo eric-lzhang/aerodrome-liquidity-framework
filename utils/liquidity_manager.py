@@ -258,3 +258,49 @@ class LiquidityManager:
 
         except Exception as e:
             raise RuntimeError(f"Error parsing mint receipt: {e}")
+
+    def decrease_liquidity(self, amount0Min=0, amount1Min=0):
+        """
+        Decreases liquidity for the position with the specified parameters.
+
+        This function:
+        - Retrieves the current liquidity associated with the position.
+        - Sends a transaction to decrease the liquidity.
+        - Waits for the transaction to be confirmed.
+
+        Args:
+            amount0Min (int, optional): Minimum amount of token0 to receive. Defaults to 0.
+            amount1Min (int, optional): Minimum amount of token1 to receive. Defaults to 0.
+
+        Returns:
+            str: Transaction hash of the decrease liquidity operation.
+
+        Raises:
+            RuntimeError: If decreasing liquidity fails.
+        """
+        try:
+            # Retrieve current liquidity for the position
+            position = self.nft_contract.functions.positions(self.nft_token_id).call()
+            current_liquidity = position[7]  # Liquidity amount
+            self.logger.info(f"Current liquidity for Token ID {self.nft_token_id}: {current_liquidity}")
+
+            # Prepare decrease parameters
+            decrease_params = {
+                "tokenId": self.nft_token_id,
+                "liquidity": current_liquidity,
+                "amount0Min": amount0Min,
+                "amount1Min": amount1Min,
+                "deadline": self.blockchain_connector.web3.eth.get_block("latest")["timestamp"] + 3 * 60,  # Deadline 3 minute from now
+            }
+
+            # Build and send the transaction
+            self.logger.info(f"Decreasing liquidity for Token ID: {self.nft_token_id}...")
+            decrease_function = self.nft_contract.functions.decreaseLiquidity(decrease_params)
+            tx_hash, receipt = self.blockchain_connector.build_and_send_transaction(decrease_function)
+
+            self.logger.info(f"Liquidity decreased successfully. Transaction hash: {tx_hash}")
+            return tx_hash
+
+        except Exception as e:
+            self.logger.error(f"Failed to decrease liquidity: {e}")
+            raise RuntimeError("Failed to decrease liquidity.") from e

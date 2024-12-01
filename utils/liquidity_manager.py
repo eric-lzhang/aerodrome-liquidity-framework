@@ -206,10 +206,10 @@ class LiquidityManager:
             mint_function = self.nft_contract.functions.mint(mint_parameters)
 
             # Build and send the transaction
-            tx_hash = self.blockchain_connector.build_and_send_transaction(mint_function)
+            self.opening_tx_hash, self.opening_receipt = self.blockchain_connector.build_and_send_transaction(mint_function)
             
-            self.logger.info(f"Liquidity position opened successfully. Transaction hash: {tx_hash}")
-            return tx_hash
+            self.logger.info(f"Liquidity position opened successfully. Transaction hash: {self.opening_tx_hash}")
+            return self.opening_tx_hash
 
         except Exception as e:
             self.logger.error(f"Failed to open liquidity position: {e}")

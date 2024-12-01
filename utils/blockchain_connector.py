@@ -1,5 +1,6 @@
 import os
 import json
+import time
 from web3 import Web3
 from eth_account import Account
 from decimal import Decimal
@@ -406,7 +407,7 @@ class BlockchainConnector:
             transaction = transaction_function.build_transaction({
                 'from': self.public_address,
                 'gas': GAS_AMOUNT,
-                'gasPrice': int(self.web3.eth.gas_price * 1.5),
+                'gasPrice': int(self.web3.eth.gas_price * 1.2),
                 'nonce': self.web3.eth.get_transaction_count(self.public_address),
             })
 
@@ -416,7 +417,12 @@ class BlockchainConnector:
             # Send the transaction
             tx_hash = self.web3.eth.send_raw_transaction(signed_tx.raw_transaction)
             self.logger.info(f"Transaction successful. Hash: {tx_hash.hex()}")
-            return tx_hash.hex()
+            receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash, timeout=1000)
+
+            # Pause to make sure the transaction went through
+            time.sleep(1)
+
+            return tx_hash.hex(), receipt
         except Exception as e:
             self.logger.error(f"Error during transaction execution: {e}")
             raise RuntimeError("Transaction failed") from e
